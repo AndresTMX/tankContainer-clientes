@@ -1,8 +1,32 @@
-# React + Vite
+<p align="center">
+<a href="https://laravel.com" target="_blank">
+<img src="https://res.cloudinary.com/dwiyxwcxj/image/upload/v1703187424/resourcesWeb/TankContainer_xalsng.png" 
+width="400" 
+alt="tankContainer logo">
+</a></p>
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+#Aplicación de clientes tankContainer
 
-Currently, two official plugins are available:
+Aplicación para programación de servicios de lavado de isotanques, seguimiento de proceso y facturación.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Instalación y despliegue
+
+**requisitos**
+- [node lts](https://nodejs.org/en)
+- configuración de archivo .env (conexión a la base de datos de supabase)
+
+**instalación**
+- git clone
+- cd
+- npm install
+
+**ejecutar en entorno de desarrollo**
+- npm run dev
+
+**ejecutar en entorno de producción**
+- npm run build
+- npm run preview
+
+**ejecutar en entorno de producción** 
+- npm run build
+- desplegar subiendo contenido de la carpeta dist al hosting
