@@ -16,8 +16,8 @@ Aplicación para programación de servicios de lavado de isotanques, seguimiento
 - configuración de archivo .env (conexión a la base de datos de supabase)
 
 **instalación**
-- git clone
-- cd
+- git clone https://github.com/AndresTMX/tankContainer-clientes.git
+- cd tankContainer-clientes
 - npm install
 
 **ejecutar en entorno de desarrollo**
@@ -27,6 +27,6 @@ Aplicación para programación de servicios de lavado de isotanques, seguimiento
 - npm run build
 - npm run preview
 
-**ejecutar en entorno de producción** 
+**despliegue en entorno de producción** 
 - npm run build
 - desplegar subiendo contenido de la carpeta dist al hosting

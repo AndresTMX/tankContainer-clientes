@@ -24,8 +24,28 @@ export function ProgramacionProvider({ children }) {
 
     const { email, first_name, last_name, cliente_id } = user_metadata || {};
 
+    const routerStatus = {
+        'confirmadas': ['confirmada'],
+        'por confirmar': ['por confirmar'],
+        'todas': ['confirmada', 'por confirmar'],
+    }
+
+    const [status, setStatus] = useState(['confirmada']);
+    const [keyStatus, setKeyStatus] = useState('confirmada');
+    const [assending, setAssending] = useState(true);
+
+    function handleStatus(keyStatus) {
+        setStatus(routerStatus[keyStatus])
+        setKeyStatus(keyStatus)
+
+    }
+
+    function handleOrder() {
+        setAssending(!assending)
+    }
+
     async function getOrders() {
-        const { error, data } = await getOrdersWhereCustomerId(cliente_id)
+        const { error, data } = await getOrdersWhereCustomerId(cliente_id, status, assending)
         return { error, data }
     }
 
@@ -34,7 +54,7 @@ export function ProgramacionProvider({ children }) {
         return { error, data }
     }
 
-    const { loading: loadingOrders, error: errorOrders, data: ordenes } = useRealtime(getOrders, 'ordenes_lavado', 'ordenes_lavado');
+    const { loading: loadingOrders, error: errorOrders, data: ordenes } = useRealtime(getOrders, 'ordenes_lavado', 'ordenes_lavado', [status, assending]);
     const { loading: loadingDestinos, error: errorDestinos, data: destinos } = useRealtime(getDestiny, 'destinos_cliente', 'destinos');
 
     const currentDate = dayjs();
@@ -43,7 +63,7 @@ export function ProgramacionProvider({ children }) {
         id: uuidv4(),
         destino_id: '',
         fecha_entrega: currentDate,
-        tanques: [{ id: uuidv4(), tipo: 'AGMU', especificacion: 'NFC', editing: false }],
+        tanques: [{ id: uuidv4(), tipo: 'AGMU', especificacion: 'NFC', descartado: false }],
         cliente_id: cliente_id,
         status: 'por confirmar',
     };
@@ -60,6 +80,10 @@ export function ProgramacionProvider({ children }) {
             }
 
             const existInOrder = ordenes.find((o) => o.id === order.id);
+            //##FECHA DE RECOLECCION
+            const dataDestino = destinos.find((d) => d.id === destino);
+            const tiempoViaje = dataDestino?.duracion ? parseInt(dataDestino.duracion) : 60;
+            const fecha_recoleccion = dayjs(fecha_entrega).subtract(tiempoViaje, 'minute');
 
             if (existInOrder === undefined) {
                 //guardar nueva orden
@@ -72,7 +96,7 @@ export function ProgramacionProvider({ children }) {
 
                 // console.log({ ...order, destino_id: destino, fecha_entrega: fecha_entrega })
 
-                const { error } = await createNewOrder({ ...order, destino_id: destino, fecha_entrega: fecha_entrega })
+                const { error } = await createNewOrder({ ...order, destino_id: destino, fecha_entrega: fecha_entrega, fecha_recoleccion: fecha_recoleccion })
 
                 if (error) {
                     throw new Error(error)
@@ -84,13 +108,12 @@ export function ProgramacionProvider({ children }) {
 
             } else {
                 //actualizar orden anterior
-
                 // let indexStored = copyOrderStore.findIndex((or) => or.id === order.id)
                 // copyOrderStore[indexStored] = { ...order, destino: destino, fecha_entrega: fecha_entrega };
                 // setOrderStore(copyOrderStore);
                 // setOrder(orderDefault);
 
-                const { error } = await updateOrderWhereId(order.id, { ...order, destino_id: destino, fecha_entrega: fecha_entrega })
+                const { error } = await updateOrderWhereId(order.id, { ...order, destino_id: destino, fecha_entrega: fecha_entrega, fecha_recoleccion: fecha_recoleccion })
 
                 if (error) {
                     throw new Error(error)
@@ -98,7 +121,6 @@ export function ProgramacionProvider({ children }) {
                     toast.success('orden actualizada')
                     setOrder(orderDefault);
                 }
-
 
             }
 
@@ -194,6 +216,9 @@ export function ProgramacionProvider({ children }) {
                 order,
                 orderStore,
                 ordenes,
+                status,
+                assending,
+                keyStatus,
                 newItemOrder,
                 changueModeEdit,
                 deleteItemOrder,
@@ -201,6 +226,8 @@ export function ProgramacionProvider({ children }) {
                 saveOrder,
                 selectOrder,
                 deleteOrder,
+                handleStatus,
+                handleOrder,
                 destinos,
             }}>
             {children}

@@ -14,17 +14,15 @@ export function AuthProvider({ children }) {
                 email,
                 password,
             });
+
             if (error) {
-                toast.error(error?.message)
-                throw new Error(`Error de inicio de session: ${error.message}`)
+                return { error }
             }
 
             if (data) {
                 sessionStorage.setItem('tankManager-session', JSON.stringify(data));
                 navigate('/');
             }
-
-            return { error }
 
         } catch (error) {
             console.error(error)

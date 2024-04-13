@@ -1,5 +1,5 @@
-import { Button, Card, Input, Select, SelectItem, Snippet, Chip } from "@nextui-org/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Button, Card, Input, Select, SelectItem, Snippet, Chip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@nextui-org/react";
+import { useEffect, useRef, useState } from "react";
 //icons
 import { IoIosAdd } from "react-icons/io";
 import { MdEdit } from "react-icons/md";
@@ -7,6 +7,9 @@ import { FaSave } from "react-icons/fa";
 import { FaTrash } from "react-icons/fa";
 import { IoTimeOutline } from "react-icons/io5";
 import { FaRegCalendarCheck } from "react-icons/fa6";
+import { FaFilter } from "react-icons/fa6";
+import { MdTune } from "react-icons/md";
+
 //libraries
 import dayjs from "dayjs";
 import { date, time } from "../../hepers/datetime";
@@ -17,17 +20,16 @@ import { useProgramacionContext } from "../../context/programacion";
 
 export function ProgramacionPage() {
 
-    const { order, newItemOrder, orderStore, saveOrder, destinos, ordenes } = useProgramacionContext();
+    const { order, newItemOrder, orderStore, saveOrder, destinos, ordenes, handleStatus, handleOrder, status: statusFilter, assending, keyStatus } = useProgramacionContext();
 
-    const { id, tanques, destino_id, fecha_entrega } = order || {};
+    const { id, tanques, destino_id, fecha_entrega, status } = order || {};
 
     const destinoRef = useRef();
 
-    const [dateTime, setDateTime] = useState({ fecha: fecha_entrega.format('YYYY-MM-DD'), hora: fecha_entrega.format('HH:mm') })
+    const [dateTime, setDateTime] = useState({ fecha: fecha_entrega.format('YYYY-MM-DD'), hora: fecha_entrega.format('HH:mm') });
 
     useEffect(() => {
         setDateTime({ fecha: fecha_entrega.format('YYYY-MM-DD'), hora: fecha_entrega.format('HH:mm') });
-
     }, [order]);
 
     function saveData() {
@@ -99,6 +101,7 @@ export function ProgramacionPage() {
 
                             <div className="flex flex-row items-center justify-end p-2">
                                 <Button
+                                    isDisabled={status != 'por confirmar'}
                                     isIconOnly
                                     size="sm"
                                     className="bg-primary text-2xl text-white"
@@ -117,16 +120,68 @@ export function ProgramacionPage() {
                             </div>
                         </div>
 
-
-
                     </Card>
 
                     <Card className="col-span-1 lg:col-span-3 bg-white h-[85svh] border-1 border-zinc-200">
 
                         <section className="flex flex-col gap-4 p-2">
 
-                            <div>
-                                <span className="px-5 text-md font-semibold text-gray-700">ordenes programadas</span>
+                            <div className="flex flex-row items-center justify-around gap-1">
+                                <span className="px-5 text-sm font-semibold text-gray-700">ordenes programadas</span>
+
+                                <div className="flex flex-row items-center gap-1" >
+
+                                    <div className="flex flex-row items-center">
+                                        <Dropdown >
+                                            <DropdownTrigger>
+                                                <Button
+                                                    isIconOnlu
+                                                    size="sm"
+                                                    color="transparent"
+                                                    className="text-primary text-lg"
+                                                >
+                                                    <FaFilter />
+                                                </Button>
+                                            </DropdownTrigger>
+                                            <DropdownMenu
+                                                selectionMode="single"
+                                                aria-label="Static Actions"
+                                                onAction={(key) => handleStatus(key)}
+                                            >
+                                                <DropdownItem key="confirmadas">confirmadas</DropdownItem>
+                                                <DropdownItem key="por confirmar">por confirmar</DropdownItem>
+                                                <DropdownItem key="todas">todos</DropdownItem>
+                                            </DropdownMenu>
+                                        </Dropdown>
+                                        <span className="text-xs" >{keyStatus}</span>
+                                    </div>
+
+                                    <div className="flex flex-row items-center">
+                                        <Dropdown >
+                                            <DropdownTrigger>
+                                                <Button
+                                                    isIconOnlu
+                                                    size="sm"
+                                                    color="transparent"
+                                                    className="text-primary text-lg"
+                                                >
+                                                    <MdTune />
+                                                </Button>
+                                            </DropdownTrigger>
+                                            <DropdownMenu
+                                                selectionMode="single"
+                                                aria-label="Static Actions"
+                                                onAction={(key) => handleOrder()}
+                                            >
+                                                <DropdownItem key="ascendente">Ascendente</DropdownItem>
+                                                <DropdownItem key="descendente">Descendente</DropdownItem>
+                                            </DropdownMenu>
+                                        </Dropdown>
+                                        <span className="text-xs" >{assending ? 'ascendente' : 'descendente'}</span>
+                                    </div>
+
+                                </div>
+
                             </div>
 
                             <div className="overflow-auto pb-10 max-h-[80vh] lg:max-h-[calc(100vh-200px)]">
@@ -157,6 +212,13 @@ function Store({ order }) {
 
     const idOrder = order.id;
 
+    const routerColor = {
+        'por confirmar': 'warning',
+        'confirmada': 'success',
+        'en proceso': 'primary',
+        'completada': 'success'
+    }
+
     return (
         <>
             <Card
@@ -186,7 +248,7 @@ function Store({ order }) {
 
                     <Chip
                         size="sm"
-                        color="warning"
+                        color={routerColor[order.status]}
                         className="text-white"
                     >
                         {order.status}
@@ -202,7 +264,7 @@ function Store({ order }) {
                             onPress={() => selectOrder({
                                 id: order.id,
                                 destino_id: order.destino_id,
-                                fecha_entrega: order.fechaEntrega,
+                                fecha_entrega: order.fecha_entrega,
                                 tanques: order.tanques,
                                 cliente_id: order.cliente_id,
                                 status: order.status,
@@ -215,7 +277,7 @@ function Store({ order }) {
                             isIconOnly
                             color="transparent"
                             className="text-xl text-danger"
-                            isDisabled={!order.status === 'por confirmar'}
+                            isDisabled={order.status != 'por confirmar'}
                             onPress={() => deleteOrder(idOrder)}
                         >
                             <FaTrash />
@@ -230,7 +292,9 @@ function Store({ order }) {
 
 function ItemOrder({ item }) {
 
-    const { deleteItemOrder, updateItemOrder, changueModeEdit } = useProgramacionContext();
+    const { deleteItemOrder, updateItemOrder, changueModeEdit, order } = useProgramacionContext();
+
+    const { status } = order || {};
 
     const especificacionRef = useRef();
     const tipoRef = useRef();
@@ -238,10 +302,64 @@ function ItemOrder({ item }) {
     const espectOptions = ['NFC', 'FCOJ', 'OR-OIL', 'DLIMONENE', 'TEQUILA', 'NFC/FCOJ'];
     const typeOptions = ['AGMU', 'DYOU', 'AFIU'];
 
+    /*/
+       0- eliminar el item de pedido de la interfaz del cliente => (funcion para cambiar key descaratdo de false a true en cliete, despues en servidor)
+       1- volver a poner la orden de lavado en 'por confirmar' 
+       2- notificar del tanque cancelado 
+       3- poner el tanque que el cliente elimina resaltado en la interfaz => (condicional de si descartado es true mostrar boton de reasignacion)
+       4- reasignar el lavado programado a otra orden || devolver el tanque a almacenaje
+       5- confirmar nuevamente la orden  
+
+    /*/
+
+    function onDelete() {
+        try {
+
+            if (status === 'confirmada') {
+                toast.custom((t) => (
+                    <Card className="flex flex-col gap-4 w-full justify-center items-center shadow-md bg-white p-4 rounded-md">
+
+                        <p className="text-sm text-center" >
+                            ¿eliminar este tanque de tu order confirmada?
+                        </p>
+
+                        <div className="flex flex-row gap-2 items-center">
+                            <Button
+                                size='sm'
+                                onClick={() => toast.dismiss(t)}
+                            >
+                                cancelar
+                            </Button>
+
+                            <Button
+                                onClick={async () => {
+
+                                    toast.dismiss(t)
+
+                                }
+                                }
+                                size="sm"
+                                color="danger">
+                                eliminar
+                            </Button>
+                        </div>
+                    </Card>
+                ))
+            }
+
+            if (status === 'por confirmar') {
+                deleteItemOrder(item.id)
+            }
+
+        } catch (error) {
+
+        }
+    }
+
 
     return (
         <>
-            <Card>
+            <Card className={`${item.descartado? 'hidden': 'flex' }`}>
 
                 <div className="flex flex-col lg:flex-row items-center gap-2 p-2">
 
@@ -274,7 +392,8 @@ function ItemOrder({ item }) {
                             size="sm"
                             isIconOnly
                             color="transparent"
-                            className={`text-xl ${item.editing ? 'text-primaryOscuro' : 'text-primary'}`}
+                            isDisabled={status != 'por confirmar'}
+                            className={`text-xl 'text-primary'}`}
                             onPress={() => changueModeEdit(item.id)}
                         >
                             <MdEdit />
@@ -283,8 +402,8 @@ function ItemOrder({ item }) {
                         <Button
                             size="sm"
                             isIconOnly
-                            isDisabled={!item.editing}
                             color="transparent"
+                            isDisabled={status != 'por confirmar'}
                             className={`text-xl ${item.editing ? 'text-primary' : 'text-default'}`}
                             onPress={() => updateItemOrder(item.id, tipoRef.current.value, especificacionRef.current.value)}
                         >
@@ -292,11 +411,12 @@ function ItemOrder({ item }) {
                         </Button>
 
                         <Button
+
                             size="sm"
                             isIconOnly
                             color="transparent"
                             className={`text-xl text-danger`}
-                            onPress={() => deleteItemOrder(item.id)}
+                            onPress={onDelete}
                         >
                             <FaTrash />
                         </Button>

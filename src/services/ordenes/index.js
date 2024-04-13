@@ -1,13 +1,14 @@
 import supabase from "../../supabase";
 
-export async function getOrdersWhereCustomerId(customerId) {
+export async function getOrdersWhereCustomerId(customerId, status, ascending) {
     try {
 
         const { error, data } = await supabase
             .from('ordenes_lavado')
             .select('*, destinos(*)')
-            .order('fecha_entrega', { ascending: true })
+            .order('fecha_entrega', { ascending: ascending })
             .eq('cliente_id', customerId)
+            .in('status', status)
             .limit(20)
 
         if (error) {
@@ -38,14 +39,25 @@ export async function createNewOrder(order) {
 
 export async function updateOrderWhereId(orderId, updates) {
     try {
-        const { error } = await supabase
+        const { error: errorUpdateOrder } = await supabase
             .from('ordenes_lavado')
             .update({ ...updates })
             .eq('id', orderId)
 
-        if (error) {
-            throw new Error(`Error al crear nueva order, error: ${error.message}`)
+        if (errorUpdateOrder) {
+            throw new Error(`Error al crear nueva order, error: ${errorUpdateOrder.message}`)
         }
+
+        const { errorUpdateWashing } = await supabase
+            .from('lavados')
+            .update({ fecha_entrega: updates.fecha_entrega, fecha_recoleccion: updates.fecha_recoleccion })
+            .eq('orden_id', orderId)
+
+        if (errorUpdateWashing) {
+            throw new Error(`Error al actualizar el horario de lavado, error: ${errorUpdateWashing.message}`)
+        }
+
+        let error = errorUpdateOrder || errorUpdateWashing;
 
         return { error }
     } catch (error) {
