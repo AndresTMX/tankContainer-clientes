@@ -292,7 +292,7 @@ function Store({ order }) {
 
 function ItemOrder({ item }) {
 
-    const { deleteItemOrder, updateItemOrder, changueModeEdit, order } = useProgramacionContext();
+    const { deleteItemOrder, updateItemOrder, changueModeEdit, discardItemOrder, order } = useProgramacionContext();
 
     const { status } = order || {};
 
@@ -315,6 +315,10 @@ function ItemOrder({ item }) {
     function onDelete() {
         try {
 
+            if (status === 'por confirmar') {
+                deleteItemOrder(item.id)
+            }
+
             if (status === 'confirmada') {
                 toast.custom((t) => (
                     <Card className="flex flex-col gap-4 w-full justify-center items-center shadow-md bg-white p-4 rounded-md">
@@ -334,7 +338,8 @@ function ItemOrder({ item }) {
                             <Button
                                 onClick={async () => {
 
-                                    toast.dismiss(t)
+                                    await discardItemOrder(item.id, () => toast.dismiss(t))
+                                    toast.warning('guarda tu orden para conservar los cambios')
 
                                 }
                                 }
@@ -347,10 +352,6 @@ function ItemOrder({ item }) {
                 ))
             }
 
-            if (status === 'por confirmar') {
-                deleteItemOrder(item.id)
-            }
-
         } catch (error) {
 
         }
@@ -359,7 +360,7 @@ function ItemOrder({ item }) {
 
     return (
         <>
-            <Card className={`${item.descartado? 'hidden': 'flex' }`}>
+            <Card className={`${item.descartado ? 'hidden' : 'flex'}`}>
 
                 <div className="flex flex-col lg:flex-row items-center gap-2 p-2">
 

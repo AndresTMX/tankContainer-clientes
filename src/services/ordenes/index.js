@@ -1,4 +1,5 @@
 import supabase from "../../supabase";
+import { createNotification } from "../notificaciones";
 
 export async function getOrdersWhereCustomerId(customerId, status, ascending) {
     try {
@@ -23,13 +24,29 @@ export async function getOrdersWhereCustomerId(customerId, status, ascending) {
 
 export async function createNewOrder(order) {
     try {
-        const { error } = await supabase
+
+        const { error: errorCreate } = await supabase
             .from('ordenes_lavado')
             .insert({ ...order })
 
-        if (error) {
-            throw new Error(`Error al crear nueva order, error: ${error.message}`)
+        if (errorCreate) {
+            throw new Error(`Error al crear nueva order, error: ${errorCreate.message}`)
         }
+
+        const notificacion = {
+            titulo: 'nueva orden',
+            descripcion: 'añadio una orden de lavado',
+            orden_id: order.id,
+            cliente_id: order.cliente_id
+        }
+
+        const { error: errorNotification } = await createNotification(notificacion);
+
+        if (errorNotification) {
+            throw new Error(`Error al crear notificacion , error: ${errorNotification.message}`)
+        }
+
+        let error = errorCreate || errorNotification;
 
         return { error }
     } catch (error) {
@@ -57,7 +74,20 @@ export async function updateOrderWhereId(orderId, updates) {
             throw new Error(`Error al actualizar el horario de lavado, error: ${errorUpdateWashing.message}`)
         }
 
-        let error = errorUpdateOrder || errorUpdateWashing;
+        const notificacion = {
+            titulo: 'actualizacion de orden',
+            descripcion: 'actualizo la orden',
+            orden_id: orderId,
+            cliente_id: updates.cliente_id
+        }
+
+        const { error: errorNotification } = await createNotification(notificacion);
+
+        if (errorNotification) {
+            throw new Error(`Error al crear notificacion , error: ${errorNotification.message}`)
+        }
+
+        let error = errorUpdateOrder || errorUpdateWashing || errorNotification;
 
         return { error }
     } catch (error) {

@@ -8,6 +8,8 @@ export function AuthProvider({ children }) {
 
     const navigate = useNavigate();
 
+    const [session, setSession] = useState(null)
+
     async function login(email, password) {
         try {
             const { data, error } = await supabase.auth.signInWithPassword({
@@ -20,7 +22,6 @@ export function AuthProvider({ children }) {
             }
 
             if (data) {
-                sessionStorage.setItem('tankManager-session', JSON.stringify(data));
                 navigate('/');
             }
 
@@ -45,23 +46,22 @@ export function AuthProvider({ children }) {
         }
     }
 
-    const session = JSON.parse(sessionStorage.getItem('tankManager-session') || '[]')
-
     useEffect(() => {
-        const { data } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
-                if (session == null) {
-                    navigate('/login', { replace: true });
-                } else {
-                    sessionStorage.setItem('tankManager-session', JSON.stringify(session));
-                    children
-                }
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session == null) {
+                navigate('/login', { replace: true });
+            } else {
+                children
             }
-        );
+        })
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session)
+        })
 
         return () => {
-            data?.subscription?.unsubscribe(); // Desuscribirse del cambio de estado de autenticación al desmontar el componente
-        };
+            subscription.unsubscribe()
+        }
     }, [children, navigate]);
 
     return (

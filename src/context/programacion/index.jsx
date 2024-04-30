@@ -54,8 +54,8 @@ export function ProgramacionProvider({ children }) {
         return { error, data }
     }
 
-    const { loading: loadingOrders, error: errorOrders, data: ordenes } = useRealtime(getOrders, 'ordenes_lavado', 'ordenes_lavado', [status, assending]);
-    const { loading: loadingDestinos, error: errorDestinos, data: destinos } = useRealtime(getDestiny, 'destinos_cliente', 'destinos');
+    const { loading: loadingOrders, error: errorOrders, data: ordenes } = useRealtime(getOrders, 'ordenes_lavado', 'ordenes_lavado', [status, assending, cliente_id]);
+    const { loading: loadingDestinos, error: errorDestinos, data: destinos } = useRealtime(getDestiny, 'destinos_cliente', 'destinos', [cliente_id]);
 
     const currentDate = dayjs();
 
@@ -113,7 +113,7 @@ export function ProgramacionProvider({ children }) {
                 // setOrderStore(copyOrderStore);
                 // setOrder(orderDefault);
 
-                const { error } = await updateOrderWhereId(order.id, { ...order, destino_id: destino, fecha_entrega: fecha_entrega, fecha_recoleccion: fecha_recoleccion })
+                const { error } = await updateOrderWhereId(order.id, { ...order, destino_id: destino, fecha_entrega: fecha_entrega, fecha_recoleccion: fecha_recoleccion, status: 'por confirmar' })
 
                 if (error) {
                     throw new Error(error)
@@ -210,6 +210,20 @@ export function ProgramacionProvider({ children }) {
         }
     }
 
+    async function discardItemOrder(idItem, callback) {
+        try {
+
+            const orderCopy = { ...order };
+            const indexItem = orderCopy.tanques.findIndex((item) => item.id === idItem);
+            orderCopy['tanques'][indexItem]['descartado'] = true
+            setOrder(orderCopy)
+            callback()
+
+        } catch (error) {
+            toast.error(error)
+        }
+    }
+
     return (
         <ProgramacionContext.Provider
             value={{
@@ -228,6 +242,7 @@ export function ProgramacionProvider({ children }) {
                 deleteOrder,
                 handleStatus,
                 handleOrder,
+                discardItemOrder,
                 destinos,
             }}>
             {children}
